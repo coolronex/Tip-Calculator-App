@@ -11,12 +11,15 @@
 @interface ViewController () <UITextFieldDelegate>
 
 @property (weak, nonatomic) IBOutlet UITextField *billAmountTextField;
+@property (weak, nonatomic) IBOutlet UITextField *tipPercentageTextField;
 @property (weak, nonatomic) IBOutlet UILabel *totalTipLabel;
 
 @property (nonatomic, strong) NSDecimalNumber *totalTip;
 @property (nonatomic, strong) NSDecimalNumber *percentage;
+@property (nonatomic, strong) NSDecimalNumber *oneHundred;
 
 - (IBAction)calculateTipButton:(UIButton *)sender;
+
 
 @end
 
@@ -25,17 +28,16 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    //don't really need the code below since we already set it in storyboard
     [self textFieldDidBeginEditing:self.billAmountTextField];
-    
     
 }
 
 #pragma mark - Text Delegate
 
-- (void) displayBillTotalAmountText:(NSString *)text {
 
-    self.billAmountTextField.text = text;
-}
+
+//don't really need the code below since we already set it in storyboard
 
 - (void) textFieldDidBeginEditing:(UITextField *)textField {
     
@@ -47,35 +49,41 @@
     [self displayBillTotalAmountText: self.billAmountTextField.text];
 }
 
-
-
 #pragma mark - Methods
+
+
+- (void) displayBillTotalAmountText:(NSString *)text {
+    
+    self.billAmountTextField.text = text;
+}
+
 
 - (IBAction)calculateTipButton:(UIButton *)sender {
     
     // get calculations from calculateTip method and send value to totalTip label
-    
     [self calculateTip];
-    [NSMutableString stringWithFormat:@"%@", self.totalTip];
     [self updateView];
 }
 
-- (void) updateView {
-    
-    self.totalTipLabel.text = [NSMutableString stringWithFormat:@"$%@", self.totalTip];
-}
 
-
-- (NSDecimalNumber *) calculateTip {
+- (void) calculateTip {
     
-    self.percentage = [[NSDecimalNumber alloc] initWithDouble: 0.15];
+    if ([self.tipPercentageTextField.text isEqualToString:@""]) {
+        
+        [self.tipPercentageTextField setText:@"0"];
+    }
     
-     NSLog(@"%@", self.percentage);
+    self.percentage = [[NSDecimalNumber alloc] initWithString:self.tipPercentageTextField.text]; 
+    
+    self.oneHundred = [[NSDecimalNumber alloc] initWithInt:100];
+    NSDecimalNumber *percentage = [self.percentage decimalNumberByDividingBy:self.oneHundred];
+    
+    NSLog(@"Percentage: %@", percentage);
     
     NSDecimalNumber *totalBillAmount = [[NSDecimalNumber alloc] initWithString:self.billAmountTextField.text];
+    NSLog(@"Total Bill: %@", totalBillAmount);
     
-    NSLog(@"%@", totalBillAmount);
-    
+    // behaviour to be used for the method 'decimalNumberBy...'
     NSDecimalNumberHandler *handler = [[NSDecimalNumberHandler alloc] initWithRoundingMode:NSRoundBankers
                                                                                      scale:2
                                                                           raiseOnExactness:NO
@@ -83,11 +91,13 @@
                                                                           raiseOnUnderflow:NO
                                                                        raiseOnDivideByZero:NO];
     
-    self.totalTip = [totalBillAmount decimalNumberByMultiplyingBy:self.percentage withBehavior:handler];
-
-    NSLog(@"%@", self.totalTip);
+    self.totalTip = [totalBillAmount decimalNumberByMultiplyingBy:percentage withBehavior:handler];
+    NSLog(@"Total Tip: %@", self.totalTip);
     
-    return self.totalTip;
 }
 
+- (void) updateView {
+    
+    self.totalTipLabel.text = [NSMutableString stringWithFormat:@"Total Tip: $%@", self.totalTip];
+}
 @end
